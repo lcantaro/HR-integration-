@@ -1,1 +1,843 @@
 
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HR Integration Expert – Your Personal Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:         #0d1117;
+  --panel:      #161b22;
+  --card:       #1c2230;
+  --border:     #2a3244;
+  --accent:     #3b82f6;
+  --accent2:    #60a5fa;
+  --green:      #22c55e;
+  --amber:      #f59e0b;
+  --red:        #ef4444;
+  --text:       #e2e8f0;
+  --muted:      #8b9ab5;
+  --user-bubble:#1d4ed8;
+  --bot-bubble: #1c2230;
+  --serif:      'DM Serif Display', Georgia, serif;
+  --mono:       'DM Mono', 'Courier New', monospace;
+  --sans:       'DM Sans', system-ui, sans-serif;
+  --radius:     12px;
+  --shadow:     0 4px 24px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{width:300px;min-width:260px;background:var(–panel);border-right:1px solid var(–border);display:flex;flex-direction:column;overflow:hidden}
+#sidebar-header{padding:22px 20px 14px;border-bottom:1px solid var(–border)}
+#sidebar-header h1{font-family:var(–serif);font-size:1.25rem;color:var(–text);line-height:1.3;letter-spacing:-.01em}
+#sidebar-header span{font-size:.72rem;color:var(–muted);font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.sidebar-section{padding:16px 20px 12px;border-bottom:1px solid var(–border)}
+.sidebar-section h2{font-size:.68rem;font-weight:600;color:var(–muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+
+/* upload zone */
+#upload-zone{border:2px dashed var(–border);border-radius:var(–radius);padding:18px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+#upload-zone:hover{border-color:var(–accent);background:rgba(59,130,246,.05)}
+#upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+#upload-zone svg{display:block;margin:0 auto 8px}
+#upload-zone p{font-size:.8rem;color:var(–muted)}
+#upload-zone .hint{font-size:.68rem;margin-top:4px;color:var(–border)}
+#upload-status{margin-top:8px;font-size:.75rem;font-weight:500}
+#upload-status.ok{color:var(–green)}
+#upload-status.err{color:var(–red)}
+
+/* KB table */
+#kb-wrapper{flex:1;overflow:hidden;display:flex;flex-direction:column}
+#kb-search-wrap{padding:10px 20px;border-bottom:1px solid var(–border)}
+#kb-search{width:100%;background:var(–card);border:1px solid var(–border);border-radius:8px;padding:7px 10px;font-size:.8rem;color:var(–text);font-family:var(–sans);outline:none}
+#kb-search::placeholder{color:var(–muted)}
+#kb-search:focus{border-color:var(–accent)}
+#kb-table-wrap{flex:1;overflow-y:auto;padding:8px 12px 12px}
+#kb-table-wrap::-webkit-scrollbar{width:4px}
+#kb-table-wrap::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px}
+.kb-row{background:var(–card);border:1px solid var(–border);border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:.15s}
+.kb-row:hover{border-color:var(–accent)}
+.kb-row .kb-title{font-size:.78rem;font-weight:600;color:var(–accent2);margin-bottom:3px}
+.kb-row .kb-meta{font-size:.7rem;color:var(–muted);display:flex;flex-wrap:wrap;gap:4px}
+.kb-tag{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:var(–accent2);border-radius:4px;padding:1px 5px;font-size:.65rem}
+.kb-empty{font-size:.78rem;color:var(–muted);text-align:center;padding:24px 0}
+
+/* sidebar bottom buttons */
+#sidebar-actions{padding:12px 16px;border-top:1px solid var(–border);display:flex;flex-direction:column;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:500;cursor:pointer;border:none;transition:.2s;font-family:var(–sans)}
+.btn-primary{background:var(–accent);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-ghost{background:transparent;color:var(–muted);border:1px solid var(–border)}
+.btn-ghost:hover{border-color:var(–accent);color:var(–accent)}
+.btn-danger{background:transparent;color:var(–red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.08)}
+.btn svg{flex-shrink:0}
+.btn-full{width:100%}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{padding:16px 24px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#topbar-title{font-family:var(–serif);font-size:1.35rem;letter-spacing:-.02em}
+#topbar-title span{color:var(–accent)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(–green);box-shadow:0 0 6px var(–green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* tabs */
+#tabs{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(–border);flex-shrink:0}
+.tab{padding:10px 16px;font-size:.8rem;font-weight:500;color:var(–muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;user-select:none}
+.tab.active{color:var(–accent);border-color:var(–accent)}
+.tab-panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-panel.active{display:flex}
+
+/* ── CHAT ── */
+#chat-messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+#chat-messages::-webkit-scrollbar{width:4px}
+#chat-messages::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px}
+
+.msg{display:flex;gap:10px;max-width:800px}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;margin-top:2px}
+.msg.bot .msg-avatar{background:linear-gradient(135deg,var(–accent),#7c3aed);color:#fff}
+.msg.user .msg-avatar{background:var(–user-bubble);color:#fff}
+.msg-body{display:flex;flex-direction:column;gap:4px}
+.msg.user .msg-body{align-items:flex-end}
+.bubble{padding:11px 15px;border-radius:14px;font-size:.875rem;line-height:1.6;max-width:600px}
+.msg.bot .bubble{background:var(–bot-bubble);border:1px solid var(–border);border-top-left-radius:4px}
+.msg.user .bubble{background:var(–user-bubble);color:#fff;border-top-right-radius:4px}
+.bubble p{margin-bottom:.4em}
+.bubble p:last-child{margin-bottom:0}
+.bubble ul{padding-left:1.2em;margin:.3em 0}
+.bubble li{margin:.15em 0}
+.bubble strong{color:var(–accent2)}
+.bubble .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:20px;font-size:.75rem;cursor:pointer;transition:.15s;border:1px solid var(–border);background:var(–card);color:var(–text)}
+.chip:hover{border-color:var(–accent);color:var(–accent);background:rgba(59,130,246,.08)}
+.chip.selected{border-color:var(–accent);background:rgba(59,130,246,.15);color:var(–accent2)}
+.ts{font-size:.65rem;color:var(–muted)}
+.typing{display:flex;gap:4px;align-items:center;padding:12px 16px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(–muted);animation:bounce .9s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+#chat-input-wrap{padding:14px 24px;border-top:1px solid var(–border);display:flex;gap:10px;flex-shrink:0}
+#chat-input{flex:1;background:var(–card);border:1px solid var(–border);border-radius:10px;padding:10px 14px;font-size:.875rem;color:var(–text);font-family:var(–sans);outline:none;resize:none;height:44px;max-height:120px;overflow-y:auto;line-height:1.5;transition:.15s}
+#chat-input:focus{border-color:var(–accent)}
+#chat-input::placeholder{color:var(–muted)}
+#send-btn{width:44px;height:44px;border-radius:10px;background:var(–accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+#send-btn:hover{background:#2563eb}
+#send-btn:disabled{opacity:.4;cursor:default}
+
+/* ── PROPOSAL TAB ── */
+#proposal-panel{flex:1;overflow-y:auto;padding:24px}
+#proposal-panel::-webkit-scrollbar{width:4px}
+#proposal-panel::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px}
+#proposal-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(–muted)}
+#proposal-empty svg{opacity:.3}
+#proposal-content{display:none}
+.prop-section{background:var(–card);border:1px solid var(–border);border-radius:var(–radius);padding:20px;margin-bottom:14px}
+.prop-section h3{font-family:var(–serif);font-size:1.05rem;margin-bottom:14px;color:var(–accent2);display:flex;align-items:center;gap:8px}
+.prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.prop-item label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(–muted);display:block;margin-bottom:3px}
+.prop-item span{font-size:.85rem;color:var(–text);font-weight:500}
+.prop-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600}
+.badge-green{background:rgba(34,197,94,.15);color:var(–green);border:1px solid rgba(34,197,94,.3)}
+.badge-amber{background:rgba(245,158,11,.15);color:var(–amber);border:1px solid rgba(245,158,11,.3)}
+.badge-blue{background:rgba(59,130,246,.15);color:var(–accent2);border:1px solid rgba(59,130,246,.3)}
+.arch-card{background:var(–panel);border:1px solid var(–border);border-radius:10px;padding:14px;margin-bottom:10px}
+.arch-card h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.arch-card .arch-body{font-size:.8rem;color:var(–muted);line-height:1.55}
+.arch-card .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.pros li::before{content:“✓ “;color:var(–green)}
+.cons li::before{content:“✗ “;color:var(–red)}
+.pros li,.cons li{font-size:.76rem;list-style:none;margin-bottom:3px;color:var(–muted)}
+#prop-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* ── PROGRESS SIDEBAR ── */
+#progress-bar{padding:10px 20px 0}
+.step{display:flex;align-items:flex-start;gap:8px;padding:6px 0;position:relative}
+.step:not(:last-child)::after{content:’’;position:absolute;left:9px;top:26px;width:1px;height:calc(100% - 4px);background:var(–border)}
+.step-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(–border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;background:var(–panel);z-index:1}
+.step-dot.done{border-color:var(–green);background:rgba(34,197,94,.15);color:var(–green)}
+.step-dot.active{border-color:var(–accent);background:rgba(59,130,246,.15);color:var(–accent)}
+.step-label{font-size:.73rem;color:var(–muted);padding-top:1px}
+.step-label.active{color:var(–text);font-weight:500}
+
+/* modal */
+#modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+#modal-backdrop.open{display:flex}
+#modal{background:var(–panel);border:1px solid var(–border);border-radius:16px;padding:28px;max-width:520px;width:90%;box-shadow:var(–shadow)}
+#modal h2{font-family:var(–serif);font-size:1.4rem;margin-bottom:8px}
+#modal p{font-size:.85rem;color:var(–muted);line-height:1.6;margin-bottom:20px}
+#modal pre{background:var(–card);border:1px solid var(–border);border-radius:8px;padding:14px;font-size:.75rem;font-family:var(–mono);color:var(–text);overflow-x:auto;margin-bottom:16px;white-space:pre-wrap}
+#modal-close{float:right}
+
+/* responsive sidebar toggle */
+#sidebar-toggle{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(–text)}
+@media(max-width:720px){
+#sidebar{display:none;position:fixed;inset:0;width:100%;z-index:50}
+#sidebar.open{display:flex}
+#sidebar-toggle{display:block}
+}
+</style>
+
+</head>
+<body>
+
+<!-- SIDEBAR -->
+
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <span>Internal Tool · HR IT</span>
+    <h1>Integration<br/>Expert Assistant</h1>
+  </div>
+
+  <!-- Upload -->
+
+  <div class="sidebar-section">
+    <h2>Knowledge Base</h2>
+    <div id="upload-zone">
+      <input type="file" id="kb-file" accept=".json,.csv"/>
+      <svg width="28" height="28" fill="none" stroke="#8b9ab5" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>Upload .JSON or .CSV</p>
+      <p class="hint">integration catalogue</p>
+    </div>
+    <div id="upload-status"></div>
+  </div>
+
+  <!-- Conversation progress -->
+
+  <div class="sidebar-section" id="progress-section">
+    <h2>Request Progress</h2>
+    <div id="progress-bar"></div>
+  </div>
+
+  <!-- KB Explorer -->
+
+  <div class="sidebar-section" style="padding-bottom:6px">
+    <h2>Integrations Explorer <span id="kb-count" style="color:var(--accent);font-size:.75rem"></span></h2>
+  </div>
+  <div id="kb-search-wrap">
+    <input id="kb-search" type="text" placeholder="Search source, target, type…" oninput="renderKB()"/>
+  </div>
+  <div id="kb-wrapper">
+    <div id="kb-table-wrap"><div class="kb-empty">Upload a knowledge base<br/>to explore integrations</div></div>
+  </div>
+
+  <div id="sidebar-actions">
+    <button class="btn btn-primary btn-full" onclick="exportProposal()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Export Proposal
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="newRequest()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+      New Request
+    </button>
+    <button class="btn btn-danger btn-full" onclick="resetConversation()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reset Session
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+
+<main id="main">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/></svg>
+      </button>
+      <div id="topbar-title">HR Integration <span>Expert</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="status-dot"></div>
+      <span style="font-size:.75rem;color:var(--muted)">Agent ready</span>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('chat')">💬 Chat</div>
+    <div class="tab" onclick="switchTab('proposal')">📋 Proposal</div>
+  </div>
+
+  <!-- CHAT PANEL -->
+
+  <div id="tab-chat" class="tab-panel active">
+    <div id="chat-messages"></div>
+    <div id="chat-input-wrap">
+      <textarea id="chat-input" placeholder="Type a message…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button id="send-btn" onclick="sendMessage()">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- PROPOSAL PANEL -->
+
+  <div id="tab-proposal" class="tab-panel">
+    <div id="proposal-panel">
+      <div id="proposal-empty">
+        <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z" stroke-linecap="round"/></svg>
+        <p style="font-size:.9rem">Complete the chat flow to generate<br/>your Integration Proposal</p>
+      </div>
+      <div id="proposal-content"></div>
+    </div>
+  </div>
+</main>
+
+<!-- EXPORT MODAL -->
+
+<div id="modal-backdrop">
+  <div id="modal">
+    <button class="btn btn-ghost modal-close" style="float:right" onclick="closeModal()">✕</button>
+    <h2>Export Proposal</h2>
+    <p>Copy the JSON below or use the buttons to download.</p>
+    <pre id="modal-json"></pre>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="copyJSON()">📋 Copy JSON</button>
+      <button class="btn btn-ghost" onclick="downloadJSON()">⬇ Download JSON</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================================================
+   STATE
+=================================================== */
+let knowledgeBase = [];
+let chatHistory   = [];
+let collecting    = {};   // answers being built
+let proposalData  = null;
+let botBusy       = false;
+
+/* Conversation flow steps */
+const STEPS = [
+  {key:'data_type',    label:'HR Data Type'},
+  {key:'source',       label:'Source System'},
+  {key:'target',       label:'Target System'},
+  {key:'delivery',     label:'Delivery Method'},
+  {key:'format',       label:'File / API Format'},
+  {key:'frequency',    label:'Frequency'},
+  {key:'load_type',    label:'Load Type'},
+  {key:'encryption',   label:'Encryption / Security'},
+  {key:'volume',       label:'Volume & Latency'},
+  {key:'transforms',   label:'Transformations'},
+];
+
+const OPTIONS = {
+  data_type:  ['Employee Master','Payroll','Time & Attendance','Compensation','Benefits','Time Off / Absence','Organisational Structure','Headcount / Workforce Analytics','Other'],
+  source:     ['SuccessFactors (SF)','SAP ECC','Workday','Oracle HCM','Active Directory','Other'],
+  target:     ['Databricks','Azure SQL / Synapse','Snowflake','Power BI / Fabric','Azure Blob Storage','SFTP','Other'],
+  delivery:   ['REST API (OData v2/v4, OAuth)','File in Azure Blob Storage','File on SFTP Server','SOAP / Web Service','Direct Database View','Other'],
+  format:     ['CSV','JSON','Parquet','XML','Delta Table','ORC','Other'],
+  frequency:  ['Real-time / Streaming','Hourly','Daily (night)','Weekly','Monthly','On-demand','Other'],
+  load_type:  ['Delta (incremental)','Full snapshot'],
+  encryption: ['PGP at rest + TLS in transit','TLS in transit only','PGP only','None (internal only)','Other / TBD'],
+};
+
+let currentStepIdx = -1; // -1 = not started
+
+/* ===================================================
+   INIT
+=================================================== */
+window.addEventListener('DOMContentLoaded', () => {
+  renderProgress();
+  startConversation();
+  document.getElementById('kb-file').addEventListener('change', loadKB);
+});
+
+/* ===================================================
+   CHAT HELPERS
+=================================================== */
+function ts() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+function addMsg(role, html, chips) {
+  const wrap = document.getElementById('chat-messages');
+  const div  = document.createElement('div');
+  div.className = `msg ${role}`;
+  const avatar = role==='bot'
+    ? '<div class="msg-avatar">AI</div>'
+    : '<div class="msg-avatar">U</div>';
+  let chipsHtml = '';
+  if (chips && chips.length) {
+    chipsHtml = `<div class="chip-row">${chips.map(c=>`<button class="chip" onclick="chipClick(this,'${escQ(c)}')">${c}</button>`).join('')}</div>`;
+  }
+  div.innerHTML = `${avatar}<div class="msg-body"><div class="bubble">${html}${chipsHtml}</div><span class="ts">${ts()}</span></div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  chatHistory.push({role, content: html});
+}
+
+function escQ(s){return s.replace(/'/g,"\\'")}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function showTyping() {
+  const wrap = document.getElementById('chat-messages');
+  const div  = document.createElement('div');
+  div.className = 'msg bot'; div.id='typing-ind';
+  div.innerHTML = `<div class="msg-avatar">AI</div><div class="msg-body"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight;
+}
+function hideTyping(){const t=document.getElementById('typing-ind');if(t)t.remove();}
+
+function botReply(html, chips, delay=700){
+  botBusy=true;
+  document.getElementById('send-btn').disabled=true;
+  showTyping();
+  setTimeout(()=>{
+    hideTyping();
+    addMsg('bot', html, chips);
+    botBusy=false;
+    document.getElementById('send-btn').disabled=false;
+    renderProgress();
+  }, delay);
+}
+
+function sendMessage(){
+  if(botBusy) return;
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  inp.value=''; inp.style.height='44px';
+  addMsg('user', esc(txt));
+  processUserInput(txt);
+}
+
+function chipClick(btn, value){
+  // toggle chip visual
+  document.querySelectorAll('#chat-messages .chip').forEach(c=>c.classList.remove('selected'));
+  btn.classList.add('selected');
+  // treat as message
+  addMsg('user', esc(value));
+  processUserInput(value);
+}
+
+/* ===================================================
+   CONVERSATION FLOW
+=================================================== */
+function startConversation(){
+  currentStepIdx = -1;
+  collecting = {};
+  proposalData = null;
+  setTimeout(()=>{
+    addMsg('bot',`<strong>Hi! 👋 I'm your HR Integration Expert Assistant.</strong><p>I help you design and document HR data integrations — from SuccessFactors or any other HR system into Databricks, Azure, Power BI and beyond.</p><p>I know all existing patterns in your catalogue. I'll ask a few quick questions and then generate an <strong>Integration Proposal</strong> you can share or export.</p><p>Ready to start? Tell me what data you need, or just click below.</p>`,
+    ['Start new request ➜']);
+  },400);
+}
+
+function processUserInput(text){
+  const lower = text.toLowerCase();
+
+  // handle greetings / triggers before step flow
+  if(currentStepIdx===-1){
+    // any input kicks off step 0
+    currentStepIdx=0;
+    askStep(0);
+    return;
+  }
+
+  // collect answer for current step
+  const step = STEPS[currentStepIdx];
+  collecting[step.key] = text;
+  currentStepIdx++;
+
+  if(currentStepIdx >= STEPS.length){
+    // Done collecting – generate proposal
+    generateProposal();
+  } else {
+    askStep(currentStepIdx);
+  }
+}
+
+function askStep(idx){
+  const step  = STEPS[idx];
+  const chips = OPTIONS[step.key] || null;
+  const q     = questionFor(step.key, idx);
+  botReply(q, chips);
+}
+
+function questionFor(key, idx){
+  const n = idx+1;
+  const total = STEPS.length;
+  const prefix = `<span style="color:var(--muted);font-size:.72rem">Step ${n}/${total}</span><br/>`;
+  const qs = {
+    data_type:  `${prefix}<strong>What HR data do you need?</strong><br/>Choose from the options or describe it.`,
+    source:     `${prefix}<strong>Which source system holds the data?</strong><br/>(Default: SuccessFactors)`,
+    target:     `${prefix}<strong>Where should the data land?</strong><br/>Target system / destination.`,
+    delivery:   `${prefix}<strong>Preferred delivery method?</strong><br/>How should the data be moved?`,
+    format:     `${prefix}<strong>File or API format?</strong><br/>What format does the consuming team need?`,
+    frequency:  `${prefix}<strong>How often does the data need to update?</strong>`,
+    load_type:  `${prefix}<strong>Delta (incremental changes) or Full snapshot?</strong>`,
+    encryption: `${prefix}<strong>Any encryption or security requirements?</strong><br/>PII / GDPR handling?`,
+    volume:     `${prefix}<strong>Expected data volume and latency requirements?</strong><br/>E.g. "~50k employees, available by 06:00 CET"`,
+    transforms: `${prefix}<strong>Any specific business rules or field transformations?</strong><br/>E.g. masking, renames, filters, lookups. Type "None" if not needed.`,
+  };
+  return qs[key] || `${prefix}<strong>${key}?</strong>`;
+}
+
+/* ===================================================
+   PROPOSAL GENERATION
+=================================================== */
+function generateProposal(){
+  botBusy=true; showTyping();
+  setTimeout(()=>{
+    hideTyping();
+    // search KB for similar
+    const similar = findSimilar(collecting);
+    const archs   = buildArchitectures(collecting, similar);
+    proposalData  = {collecting, similar, archs, generatedAt: new Date().toISOString()};
+
+    let simNote = '';
+    if(similar.length){
+      simNote = `<p>🔍 <strong>Found ${similar.length} similar existing integration(s)</strong> in your catalogue — I've used those patterns in my recommendations below.</p>`;
+    }
+
+    addMsg('bot',
+      `${simNote}<strong>Thanks! I have everything I need.</strong><p>I've generated your <strong>Integration Proposal</strong> — switch to the <em>Proposal</em> tab to review it. You can also export it as JSON.</p>`,
+      ['View Proposal ➜']
+    );
+    renderProposal(proposalData);
+    botBusy=false;
+    document.getElementById('send-btn').disabled=false;
+    renderProgress();
+  }, 1800);
+}
+
+function findSimilar(c){
+  if(!knowledgeBase.length) return [];
+  return knowledgeBase.filter(row=>{
+    const src = (row.source_system||row.source||'').toLowerCase();
+    const tgt = (row.target_system||row.target||'').toLowerCase();
+    const dt  = (row.data_type||'').toLowerCase();
+    const cs  = (c.source||'').toLowerCase();
+    const ct  = (c.target||'').toLowerCase();
+    const cd  = (c.data_type||'').toLowerCase();
+    return (src.includes(cs.split(' ')[0]) || cs.includes(src.split(' ')[0]))
+        || (tgt.includes(ct.split(' ')[0]) || ct.includes(tgt.split(' ')[0]))
+        || (dt.includes(cd.split(' ')[0])  || cd.includes(dt.split(' ')[0]));
+  }).slice(0,3);
+}
+
+function buildArchitectures(c, similar){
+  const archs = [];
+  const target = (c.target||'').toLowerCase();
+  const delivery = (c.delivery||'').toLowerCase();
+
+  // Arch 1: always recommend the "native" best practice
+  if(target.includes('databricks') || delivery.includes('blob')){
+    archs.push({
+      name:'Azure Blob → Databricks (Recommended)',
+      icon:'⭐',
+      badge:'badge-green',
+      badgeLabel:'Best Fit',
+      desc:`SuccessFactors Integration Center or OData API extracts data as <strong>${c.format||'CSV/Parquet'}</strong> files, drops them into <strong>Azure Blob Storage</strong>, then a Databricks Auto Loader or ADF pipeline ingests into Delta tables.`,
+      pros:['Native Databricks ingestion pattern','Auto Loader handles schema evolution','Cost-effective for bulk loads','Works for both delta and full'],
+      cons:['File staging adds ~5min latency','Requires Azure Blob container setup'],
+    });
+  } else if(target.includes('sftp') || delivery.includes('sftp')){
+    archs.push({
+      name:'SFTP File Transfer (SuccessFactors Native)',
+      icon:'📂',
+      badge:'badge-blue',
+      badgeLabel:'Low Config',
+      desc:`SuccessFactors Integration Center generates a <strong>${c.format||'CSV'}</strong> file on its schedule and pushes directly to your SFTP endpoint. Downstream systems poll and process.`,
+      pros:['Zero custom development','SuccessFactors native support','Reliable for scheduled loads'],
+      cons:['SFTP is not real-time','Requires SFTP server management'],
+    });
+  } else {
+    archs.push({
+      name:'OData API (Real-time pull)',
+      icon:'🔌',
+      badge:'badge-blue',
+      badgeLabel:'API Pattern',
+      desc:`Consuming system calls SuccessFactors OData v2/v4 API with <strong>OAuth 2.0</strong>, fetching ${c.data_type||'HR'} entities. Paginated, supports $filter for delta.`,
+      pros:['Real-time or near-real-time','No file staging','Standard REST'],
+      cons:['Rate limits apply (600 req/min)','Requires OAuth app setup in SF'],
+    });
+  }
+
+  // Arch 2: alternative
+  archs.push({
+    name:'ADF Pipeline + Azure SQL / Staging',
+    icon:'🔄',
+    badge:'badge-amber',
+    badgeLabel:'Alternative',
+    desc:`Azure Data Factory orchestrates extraction from SuccessFactors via the SF connector (or SFTP), lands data in <strong>Azure SQL staging tables</strong>, then transformations push to target.`,
+    pros:['ADF monitoring & alerting','Easy to add transformations','Connects to many targets'],
+    cons:['ADF licensing cost','More infrastructure to manage'],
+  });
+
+  // Arch 3: if similar exist, propose re-use
+  if(similar.length){
+    const sim = similar[0];
+    archs.push({
+      name:`Reuse Existing Pattern: ${sim.source_system||sim.source||'Known'} → ${sim.target_system||sim.target||'Target'}`,
+      icon:'♻️',
+      badge:'badge-green',
+      badgeLabel:'Reuse',
+      desc:`An existing integration (<strong>${sim.integration_id||'ID N/A'}</strong>) uses <strong>${sim.delivery_method||sim.delivery||'similar delivery'}</strong> with <strong>${sim.frequency||'similar cadence'}</strong> load type. Cloning this pattern reduces lead time significantly.`,
+      pros:['Proven & production-tested','Faster delivery (clone & adapt)','Known failure modes'],
+      cons:['May require schema adjustments','Dependency on existing pipeline health'],
+    });
+  }
+
+  return archs;
+}
+
+/* ===================================================
+   RENDER PROPOSAL
+=================================================== */
+function renderProposal(pd){
+  const el   = document.getElementById('proposal-content');
+  const emp  = document.getElementById('proposal-empty');
+  const c    = pd.collecting;
+  const now  = new Date(pd.generatedAt).toLocaleString();
+
+  emp.style.display='none'; el.style.display='block';
+
+  const reqGrid = [
+    {l:'HR Data Type',     v: c.data_type},
+    {l:'Source System',    v: c.source},
+    {l:'Target System',    v: c.target},
+    {l:'Delivery Method',  v: c.delivery},
+    {l:'Format',           v: c.format},
+    {l:'Frequency',        v: c.frequency},
+    {l:'Load Type',        v: c.load_type, badge: c.load_type&&c.load_type.toLowerCase().includes('delta') ? 'badge-green' : 'badge-amber'},
+    {l:'Encryption',       v: c.encryption},
+    {l:'Volume / Latency', v: c.volume},
+    {l:'Transformations',  v: c.transforms},
+  ];
+
+  const archCards = pd.archs.map(a=>`
+    <div class="arch-card">
+      <h4>${a.icon} ${esc(a.name)} <span class="prop-badge ${a.badge}">${a.badgeLabel}</span></h4>
+      <div class="arch-body">${a.desc}</div>
+      <div class="pros-cons">
+        <ul class="pros">${a.pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+        <ul class="cons">${a.cons.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+
+  let simHtml = '';
+  if(pd.similar.length){
+    simHtml = `<div class="prop-section">
+      <h3>🔍 Similar Existing Integrations</h3>
+      ${pd.similar.map(s=>`
+        <div class="arch-card">
+          <h4>${esc(s.integration_id||'ID N/A')} — ${esc(s.source_system||s.source||'?')} → ${esc(s.target_system||s.target||'?')}</h4>
+          <div class="arch-body">
+            <strong>Type:</strong> ${esc(s.data_type||'—')} &nbsp;|&nbsp;
+            <strong>Method:</strong> ${esc(s.delivery_method||s.delivery||'—')} &nbsp;|&nbsp;
+            <strong>Freq:</strong> ${esc(s.frequency||'—')} &nbsp;|&nbsp;
+            <strong>Load:</strong> ${esc(s.load_type||'—')}
+            ${s.notes ? `<br/><em>${esc(s.notes)}</em>` : ''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="prop-section">
+      <h3>📋 Integration Requirements</h3>
+      <div class="prop-grid">
+        ${reqGrid.map(r=>`<div class="prop-item"><label>${r.l}</label><span>${r.badge?`<span class="prop-badge ${r.badge}">${esc(r.v||'—')}</span>`:esc(r.v||'—')}</span></div>`).join('')}
+      </div>
+    </div>
+    ${simHtml}
+    <div class="prop-section">
+      <h3>🏗 Recommended Architectures</h3>
+      ${archCards}
+    </div>
+    <div class="prop-section">
+      <h3>📌 Next Steps</h3>
+      <ul style="font-size:.83rem;color:var(--muted);padding-left:1.2em;line-height:1.9">
+        <li>Review recommended architecture with IT Integration team</li>
+        <li>Confirm SuccessFactors API / Integration Center access</li>
+        <li>Define target schema / Delta table structure</li>
+        <li>Agree on SLA, monitoring, and alerting approach</li>
+        <li>Open Jira ticket referencing this proposal (export JSON below)</li>
+      </ul>
+    </div>
+    <div class="prop-section" style="border-color:var(--border);background:transparent">
+      <span style="font-size:.7rem;color:var(--muted)">Generated by HR Integration Expert Assistant · ${now}</span>
+    </div>
+    <div id="prop-actions">
+      <button class="btn btn-primary" onclick="exportProposal()">⬇ Export JSON</button>
+      <button class="btn btn-ghost" onclick="switchTab('chat')">💬 Back to Chat</button>
+    </div>`;
+
+  // switch tab automatically
+  switchTab('proposal');
+}
+
+/* ===================================================
+   KB LOAD & RENDER
+=================================================== */
+function loadKB(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const stat = document.getElementById('upload-status');
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      if(ext==='json'){
+        const raw = JSON.parse(ev.target.result);
+        knowledgeBase = Array.isArray(raw) ? raw : (raw.integrations||raw.data||[raw]);
+      } else {
+        knowledgeBase = parseCSV(ev.target.result);
+      }
+      stat.textContent=`✓ Loaded ${knowledgeBase.length} integrations`;
+      stat.className='ok';
+      document.getElementById('kb-count').textContent=`(${knowledgeBase.length})`;
+      renderKB();
+    } catch(err){
+      stat.textContent='✗ Parse error: '+err.message;
+      stat.className='err';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text){
+  const lines = text.trim().split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2) return [];
+  const headers = lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  return lines.slice(1).map(line=>{
+    const vals = line.match(/(".*?"|[^,]+|(?<=,)(?=,)|(?<=,)$|^(?=,))/g)||[];
+    const obj={};
+    headers.forEach((h,i)=>{ obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim(); });
+    return obj;
+  });
+}
+
+function renderKB(){
+  const q    = document.getElementById('kb-search').value.toLowerCase();
+  const wrap = document.getElementById('kb-table-wrap');
+  if(!knowledgeBase.length){ wrap.innerHTML='<div class="kb-empty">Upload a knowledge base<br/>to explore integrations</div>'; return; }
+  const filtered = knowledgeBase.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q));
+  if(!filtered.length){ wrap.innerHTML='<div class="kb-empty">No results for "'+esc(q)+'"</div>'; return; }
+  wrap.innerHTML = filtered.map(r=>{
+    const id  = r.integration_id||r.id||'–';
+    const src = r.source_system||r.source||'–';
+    const tgt = r.target_system||r.target||'–';
+    const dt  = r.data_type||'–';
+    const dm  = r.delivery_method||r.delivery||'–';
+    const fr  = r.frequency||'–';
+    return `<div class="kb-row" title="${esc(JSON.stringify(r,null,2))}">
+      <div class="kb-title">${esc(id)}: ${esc(src)} → ${esc(tgt)}</div>
+      <div class="kb-meta">
+        <span class="kb-tag">${esc(dt)}</span>
+        <span class="kb-tag">${esc(dm)}</span>
+        <span class="kb-tag">${esc(fr)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================================================
+   PROGRESS
+=================================================== */
+function renderProgress(){
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = STEPS.map((s,i)=>{
+    let cls='';
+    if(collecting[s.key]) cls='done';
+    else if(i===currentStepIdx) cls='active';
+    const icon = collecting[s.key]?'✓':(i===currentStepIdx?'●':'');
+    return `<div class="step">
+      <div class="step-dot ${cls}">${icon}</div>
+      <div class="step-label ${cls===''&&i!==currentStepIdx?'':'active'}">${s.label}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================================================
+   TABS
+=================================================== */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', ['chat','proposal'][i]===name);
+  });
+  document.getElementById('tab-chat').classList.toggle('active', name==='chat');
+  document.getElementById('tab-proposal').classList.toggle('active', name==='proposal');
+  if(name==='chat') document.getElementById('chat-messages').scrollTop=9999;
+}
+
+/* ===================================================
+   RESET / NEW
+=================================================== */
+function resetConversation(){
+  if(!confirm('Reset everything? Chat and proposal will be cleared.')) return;
+  chatHistory=[];collecting={};proposalData=null;currentStepIdx=-1;
+  document.getElementById('chat-messages').innerHTML='';
+  document.getElementById('proposal-content').style.display='none';
+  document.getElementById('proposal-empty').style.display='flex';
+  switchTab('chat');
+  startConversation();
+}
+
+function newRequest(){
+  collecting={};proposalData=null;currentStepIdx=-1;
+  switchTab('chat');
+  botReply(`<strong>Starting a fresh request!</strong><p>Let's go again. What HR data do you need?</p>`, OPTIONS.data_type);
+  currentStepIdx=0;
+  renderProgress();
+}
+
+/* ===================================================
+   EXPORT
+=================================================== */
+function exportProposal(){
+  if(!proposalData){ alert('Complete the chat flow first to generate a proposal.'); return; }
+  const json = JSON.stringify({
+    proposal: {
+      request:          proposalData.collecting,
+      similar_existing: proposalData.similar.map(s=>({
+        id: s.integration_id||s.id,
+        source: s.source_system||s.source,
+        target: s.target_system||s.target,
+        delivery: s.delivery_method||s.delivery,
+        frequency: s.frequency,
+      })),
+      architectures:    proposalData.archs.map(a=>({name:a.name,description:a.desc.replace(/<[^>]+>/g,''),pros:a.pros,cons:a.cons})),
+      generated_at:     proposalData.generatedAt,
+      tool:             'HR Integration Expert Assistant v1.0',
+    }
+  }, null, 2);
+  document.getElementById('modal-json').textContent = json;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('modal-backdrop').classList.remove('open'); }
+
+function copyJSON(){
+  navigator.clipboard.writeText(document.getElementById('modal-json').textContent)
+    .then(()=>{ document.querySelector('#modal .btn-primary').textContent='✓ Copied!'; setTimeout(()=>document.querySelector('#modal .btn-primary').textContent='📋 Copy JSON',1800); });
+}
+
+function downloadJSON(){
+  const blob = new Blob([document.getElementById('modal-json').textContent], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`integration_proposal_${Date.now()}.json`;
+  a.click();
+}
+
+/* click outside modal */
+document.getElementById('modal-backdrop').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+</script>
+
+</body>
+</html>
